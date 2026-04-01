@@ -1,0 +1,10 @@
+{
+  "name": "claw-evolution",
+  "version": "1.0.0",
+  "description": "The Evolution of Claws - an interactive 530-million-year knowledge drop with AI narration, ambient music, and SVG illustrations",
+  "scripts": {
+    "dev": "npx serve public",
+    "build": "echo 'Static site, no build needed'"
+  },
+  "license": "MIT"
+}
