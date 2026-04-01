@@ -3,102 +3,521 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Evolution of Claws 🦞 — OpenClaw Knowledge Drop</title>
+<title>The Evolution of Claws — OpenClaw Knowledge Drop</title>
 <script src="https://js.puter.com/v2/"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;600;700;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@400;700&display=swap');
+
+  :root {
+    --bone: #f0ece4;
+    --parchment: #e8e0d4;
+    --amber: #c4873a;
+    --amber-dim: rgba(196,135,58,0.15);
+    --gold: #b8964e;
+    --gold-dim: rgba(184,150,78,0.08);
+    --ink: #1a1714;
+    --ink-soft: #2a2520;
+    --ink-mid: #3d362e;
+    --copper: #a0522d;
+    --specimen-bg: rgba(15,13,10,0.92);
+    --glass: rgba(240,236,228,0.04);
+    --glass-border: rgba(184,150,78,0.18);
+    --emerald: #2d6a4f;
+    --crimson: #8b1a1a;
+    --display-font: 'Cormorant Garamond', 'Garamond', serif;
+    --body-font: 'Source Serif 4', 'Georgia', serif;
+    --mono-font: 'JetBrains Mono', monospace;
+    --hand-font: 'Caveat', cursive;
+  }
+
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#000; overflow:hidden; font-family:'Inter',system-ui,sans-serif; width:100vw; height:100vh; color:#fff; }
 
-  /* START */
-  #start-screen { position:fixed; inset:0; z-index:1000; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:opacity 0.6s; }
-  .start-lobster { font-size:5rem; animation:wobble 1s ease-in-out infinite; }
-  @keyframes wobble { 0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg)} }
-  .start-title { font-family:'Space Grotesk',sans-serif; font-size:3rem; font-weight:700; margin:0.8rem 0 0.3rem; background:linear-gradient(90deg,#ff6b35,#f7c948,#ff6b35); background-size:200%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; animation:shimmer 2s linear infinite; }
-  @keyframes shimmer { to{background-position:200% center;} }
-  .start-sub { color:#888; font-size:1rem; margin-bottom:0.5rem; }
-  .start-tag { display:inline-block; background:rgba(255,107,53,0.15); border:1px solid rgba(255,107,53,0.3); border-radius:20px; padding:0.3rem 1rem; color:#ff6b35; font-weight:700; font-size:0.85rem; margin-bottom:2rem; }
-  .start-play { background:#ff6b35; color:#000; font-weight:700; font-size:1.1rem; border:none; border-radius:30px; padding:0.8rem 2.5rem; cursor:pointer; transition:transform 0.2s; }
-  .start-play:hover { transform:scale(1.06); }
-  .start-note { color:#555; font-size:0.75rem; margin-top:1rem; }
+  body {
+    background: #0a0908;
+    overflow: hidden;
+    font-family: var(--body-font);
+    width: 100vw; height: 100vh;
+    color: var(--bone);
+  }
 
-  /* SCENES */
-  #canvas { width:100vw; height:100vh; position:relative; overflow:hidden; }
-  .scene { position:absolute; inset:0; opacity:0; display:flex; align-items:center; justify-content:center; transition:opacity 0.8s; pointer-events:none; }
-  .scene.active { opacity:1; pointer-events:auto; }
+  /* Grain overlay */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 128px;
+  }
 
-  .tweet-card { width:580px; max-width:94vw; background:#16181c; border:1px solid #2f3336; border-radius:16px; padding:1.4rem; position:relative; z-index:2; animation:cardIn 0.6s cubic-bezier(0.16,1,0.3,1) both; }
-  @keyframes cardIn { from{opacity:0;transform:translateY(40px) scale(0.96)} to{opacity:1;transform:none} }
+  /* ==================== START SCREEN ==================== */
+  #start-screen {
+    position: fixed; inset: 0; z-index: 1000;
+    background: #0a0908;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.8s ease;
+  }
+  #start-screen::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 45%, rgba(196,135,58,0.08), transparent),
+      radial-gradient(circle at 50% 100%, rgba(184,150,78,0.04), transparent 60%);
+    pointer-events: none;
+  }
 
-  .tweet-head { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.7rem; }
-  .tweet-avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#ff6b35,#f7c948); display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
-  .tweet-name { font-weight:700; font-size:0.95rem; }
-  .tweet-handle { color:#71767b; font-size:0.85rem; }
-  .tweet-thread-badge { margin-left:auto; color:#ff6b35; font-size:0.75rem; font-weight:700; border:1px solid rgba(255,107,53,0.3); border-radius:12px; padding:0.15rem 0.6rem; background:rgba(255,107,53,0.08); }
-  .tweet-era { color:#f7c948; font-weight:700; font-size:0.8rem; letter-spacing:0.5px; margin-bottom:0.5rem; }
+  .start-lobster {
+    font-size: 4.5rem;
+    animation: specimen-breathe 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 40px rgba(196,135,58,0.3));
+  }
+  @keyframes specimen-breathe {
+    0%,100% { transform: scale(1) rotate(-3deg); }
+    50% { transform: scale(1.06) rotate(3deg); }
+  }
+
+  .start-title {
+    font-family: var(--display-font);
+    font-size: 3.4rem;
+    font-weight: 700;
+    font-style: italic;
+    margin: 1rem 0 0.2rem;
+    color: var(--bone);
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 60px rgba(196,135,58,0.2);
+  }
+
+  .start-sub {
+    font-family: var(--body-font);
+    color: rgba(240,236,228,0.45);
+    font-size: 1rem;
+    font-style: italic;
+    margin-bottom: 0.6rem;
+    letter-spacing: 0.12em;
+  }
+
+  .start-tag {
+    display: inline-block;
+    background: var(--amber-dim);
+    border: 1px solid rgba(196,135,58,0.25);
+    border-radius: 2px;
+    padding: 0.25rem 1rem;
+    color: var(--amber);
+    font-family: var(--mono-font);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+  }
+
+  .start-play {
+    background: var(--amber);
+    color: var(--ink);
+    font-family: var(--display-font);
+    font-weight: 700;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 2px;
+    padding: 0.9rem 2.8rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    letter-spacing: 0.04em;
+    box-shadow: 0 4px 24px rgba(196,135,58,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .start-play:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 40px rgba(196,135,58,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  .start-note {
+    color: rgba(240,236,228,0.25);
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
+    margin-top: 1.2rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* ==================== SCENES ==================== */
+  #canvas { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+
+  .scene {
+    position: absolute; inset: 0;
+    opacity: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 1s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+  }
+  .scene.active { opacity: 1; pointer-events: auto; }
+
+  /* ==================== CARDS ==================== */
+  .tweet-card {
+    width: 600px;
+    max-width: 94vw;
+    background: var(--specimen-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 3px;
+    padding: 1.8rem 2rem;
+    position: relative;
+    z-index: 2;
+    animation: card-reveal 0.8s cubic-bezier(0.16,1,0.3,1) both;
+    box-shadow:
+      0 1px 0 rgba(184,150,78,0.06),
+      0 20px 60px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(240,236,228,0.03);
+    backdrop-filter: blur(20px);
+  }
+  .tweet-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.3;
+  }
+  @keyframes card-reveal {
+    from { opacity: 0; transform: translateY(30px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .tweet-head {
+    display: flex; align-items: center; gap: 0.7rem;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid rgba(184,150,78,0.08);
+  }
+  .tweet-avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--amber), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 12px rgba(196,135,58,0.2);
+  }
+  .tweet-name {
+    font-family: var(--display-font);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--bone);
+  }
+  .tweet-handle {
+    font-family: var(--mono-font);
+    color: rgba(240,236,228,0.3);
+    font-size: 0.72rem;
+  }
+  .tweet-thread-badge {
+    margin-left: auto;
+    color: var(--amber);
+    font-family: var(--mono-font);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid rgba(196,135,58,0.2);
+    border-radius: 2px;
+    padding: 0.15rem 0.6rem;
+    background: var(--amber-dim);
+  }
+
+  .tweet-era {
+    font-family: var(--mono-font);
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    opacity: 0.8;
+  }
 
   /* SVG illustration area */
-  .tweet-illust { width:100%; height:200px; border-radius:12px; overflow:hidden; margin-bottom:0.8rem; border:1px solid #2f3336; background:#0d1117; display:flex; align-items:center; justify-content:center; }
-  .tweet-illust svg { width:100%; height:100%; }
+  .tweet-illust {
+    width: 100%;
+    height: 200px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(184,150,78,0.1);
+    background: rgba(10,9,8,0.6);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .tweet-illust::after {
+    content: '';
+    position: absolute; inset: 0;
+    border: 1px solid rgba(184,150,78,0.05);
+    border-radius: 3px;
+    pointer-events: none;
+  }
+  .tweet-illust svg { width: 100%; height: 100%; }
 
-  .tweet-title { font-family:'Space Grotesk',sans-serif; font-size:1.4rem; font-weight:700; margin-bottom:0.35rem; line-height:1.3; }
-  .tweet-body { color:#e7e9ea; font-size:0.92rem; line-height:1.55; margin-bottom:0.5rem; }
-  .tweet-body .hl { color:#f7c948; font-weight:700; }
-  .tweet-body .stat { color:#ff6b35; font-weight:700; }
-  .tweet-tags { color:#1d9bf0; font-size:0.82rem; margin-bottom:0.7rem; }
-  .tweet-engage { display:flex; gap:2rem; color:#71767b; font-size:0.78rem; border-top:1px solid #2f3336; padding-top:0.6rem; }
-  .tweet-engage span { display:flex; align-items:center; gap:0.3rem; }
-  .tweet-source { margin-top:0.5rem; padding-top:0.4rem; border-top:1px solid #2f3336; font-size:0.68rem; color:#555; line-height:1.5; }
-  .tweet-source a { color:#1d9bf0; text-decoration:none; }
+  .tweet-title {
+    font-family: var(--display-font);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    color: var(--bone);
+  }
+  .tweet-body {
+    font-family: var(--body-font);
+    color: rgba(240,236,228,0.75);
+    font-size: 0.92rem;
+    line-height: 1.7;
+    margin-bottom: 0.6rem;
+  }
+  .tweet-body .hl {
+    color: var(--gold);
+    font-weight: 700;
+    font-style: italic;
+  }
+  .tweet-body .stat {
+    color: var(--amber);
+    font-family: var(--mono-font);
+    font-weight: 700;
+    font-size: 0.88rem;
+  }
 
-  /* BG glows */
-  .scene-bg { position:absolute; inset:0; z-index:0; opacity:0.12; }
-  .bg-g1 { background:radial-gradient(circle at 30% 40%,#ff6b35,transparent 60%); }
-  .bg-g2 { background:radial-gradient(circle at 70% 60%,#8b5cf6,transparent 60%); }
-  .bg-g3 { background:radial-gradient(circle at 50% 30%,#10b981,transparent 60%); }
-  .bg-g4 { background:radial-gradient(circle at 40% 70%,#ef4444,transparent 60%); }
-  .bg-g5 { background:radial-gradient(circle at 60% 30%,#3b82f6,transparent 60%); }
-  .bg-g6 { background:radial-gradient(circle at 50% 50%,#22c55e,transparent 60%); }
-  .bg-g7 { background:radial-gradient(circle at 50% 50%,#f7c948,transparent 50%); }
+  .tweet-tags {
+    font-family: var(--mono-font);
+    color: var(--emerald);
+    font-size: 0.72rem;
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.02em;
+    opacity: 0.7;
+  }
+
+  .tweet-engage {
+    display: flex; gap: 2rem;
+    color: rgba(240,236,228,0.25);
+    font-family: var(--mono-font);
+    font-size: 0.7rem;
+    border-top: 1px solid rgba(184,150,78,0.08);
+    padding-top: 0.7rem;
+  }
+  .tweet-engage span {
+    display: flex; align-items: center; gap: 0.3rem;
+    transition: color 0.2s;
+  }
+  .tweet-engage span:hover { color: var(--amber); }
+
+  .tweet-source {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(184,150,78,0.06);
+    font-family: var(--body-font);
+    font-size: 0.68rem;
+    font-style: italic;
+    color: rgba(240,236,228,0.2);
+    line-height: 1.5;
+  }
+  .tweet-source a {
+    color: var(--emerald);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(45,106,79,0.3);
+    transition: border-color 0.2s;
+  }
+  .tweet-source a:hover { border-color: var(--emerald); }
+
+  /* ==================== BACKGROUND ATMOSPHERICS ==================== */
+  .scene-bg {
+    position: absolute; inset: 0;
+    z-index: 0;
+    opacity: 0.08;
+    filter: blur(80px);
+  }
+  .bg-g1 { background: radial-gradient(circle at 30% 40%, var(--amber), transparent 60%); }
+  .bg-g2 { background: radial-gradient(circle at 70% 60%, #5c3d7a, transparent 60%); }
+  .bg-g3 { background: radial-gradient(circle at 50% 30%, var(--emerald), transparent 60%); }
+  .bg-g4 { background: radial-gradient(circle at 40% 70%, var(--crimson), transparent 60%); }
+  .bg-g5 { background: radial-gradient(circle at 60% 30%, #2c4a6e, transparent 60%); }
+  .bg-g6 { background: radial-gradient(circle at 50% 50%, #2d5a3d, transparent 60%); }
+  .bg-g7 { background: radial-gradient(circle at 50% 50%, var(--gold), transparent 50%); }
 
   /* SVG float animation */
   @keyframes svgFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
   .float-anim { animation: svgFloat 3s ease-in-out infinite; }
 
-  /* CONTROLS */
-  .ctrl { position:fixed; z-index:200; background:rgba(22,24,28,0.9); border:1px solid #2f3336; color:#fff; width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:0.95rem; display:none; align-items:center; justify-content:center; backdrop-filter:blur(8px); transition:all 0.2s; }
-  .ctrl:hover { border-color:#ff6b35; }
-  #btn-pause{top:14px;right:14px} #btn-music{top:14px;right:58px} #btn-voice{top:14px;right:102px}
-  #progress { position:fixed; bottom:0; left:0; height:3px; background:linear-gradient(90deg,#ff6b35,#f7c948); z-index:100; transition:width 0.5s; }
-  #counter { position:fixed; top:16px; left:16px; z-index:200; background:rgba(22,24,28,0.9); border:1px solid #2f3336; border-radius:20px; padding:0.25rem 0.8rem; color:#71767b; font-size:0.75rem; font-weight:600; display:none; }
-  #subs { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:200; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); border-radius:10px; padding:0.5rem 1.2rem; color:#e7e9ea; font-size:0.88rem; max-width:620px; text-align:center; opacity:0; transition:opacity 0.4s; pointer-events:none; border:1px solid #2f3336; }
-  #subs.show { opacity:1; }
+  /* ==================== CONTROLS ==================== */
+  .ctrl {
+    position: fixed;
+    z-index: 200;
+    background: rgba(15,13,10,0.9);
+    border: 1px solid var(--glass-border);
+    color: var(--bone);
+    width: 40px; height: 40px;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: none; align-items: center; justify-content: center;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .ctrl:hover {
+    border-color: var(--amber);
+    box-shadow: 0 2px 16px rgba(196,135,58,0.15);
+  }
+  #btn-pause { top: 14px; right: 14px; }
+  #btn-music { top: 14px; right: 60px; }
+  #btn-voice { top: 14px; right: 106px; }
 
-  /* Finale */
-  .finale-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem; margin:0.8rem 0; }
-  .fin-item { background:rgba(255,255,255,0.05); border-radius:10px; padding:0.5rem; text-align:center; border:1px solid #2f3336; }
-  .fin-item .e { font-size:1.6rem; } .fin-item .n { font-size:0.7rem; font-weight:600; color:#aaa; margin-top:0.15rem; }
-  .replay-btn { display:inline-block; margin-top:0.8rem; background:#ff6b35; color:#000; font-weight:700; font-size:0.9rem; border:none; border-radius:20px; padding:0.5rem 1.8rem; cursor:pointer; transition:transform 0.2s; }
-  .replay-btn:hover { transform:scale(1.05); }
+  #progress {
+    position: fixed; bottom: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--copper), var(--amber), var(--gold));
+    z-index: 100;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 12px rgba(196,135,58,0.3);
+  }
+
+  #counter {
+    position: fixed; top: 18px; left: 18px;
+    z-index: 200;
+    background: rgba(15,13,10,0.9);
+    border: 1px solid var(--glass-border);
+    border-radius: 2px;
+    padding: 0.2rem 0.7rem;
+    font-family: var(--mono-font);
+    color: rgba(240,236,228,0.35);
+    font-size: 0.68rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    display: none;
+    backdrop-filter: blur(12px);
+  }
+
+  #subs {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    background: rgba(10,9,8,0.92);
+    backdrop-filter: blur(16px);
+    border-radius: 3px;
+    padding: 0.6rem 1.6rem;
+    font-family: var(--body-font);
+    color: rgba(240,236,228,0.8);
+    font-size: 0.88rem;
+    font-style: italic;
+    max-width: 620px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+    border: 1px solid var(--glass-border);
+    line-height: 1.6;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  #subs.show { opacity: 1; }
+
+  /* ==================== FINALE ==================== */
+  .finale-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+    margin: 1rem 0;
+  }
+  .fin-item {
+    background: var(--glass);
+    border-radius: 3px;
+    padding: 0.6rem;
+    text-align: center;
+    border: 1px solid rgba(184,150,78,0.08);
+    transition: all 0.3s;
+  }
+  .fin-item:hover {
+    border-color: rgba(184,150,78,0.2);
+    background: rgba(240,236,228,0.06);
+    transform: translateY(-2px);
+  }
+  .fin-item .e { font-size: 1.6rem; }
+  .fin-item .n {
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
+    font-weight: 400;
+    color: rgba(240,236,228,0.4);
+    margin-top: 0.2rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .replay-btn {
+    display: inline-block;
+    margin-top: 1rem;
+    background: transparent;
+    color: var(--amber);
+    font-family: var(--display-font);
+    font-weight: 700;
+    font-size: 0.95rem;
+    border: 1px solid var(--amber);
+    border-radius: 2px;
+    padding: 0.5rem 2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 0.04em;
+  }
+  .replay-btn:hover {
+    background: var(--amber);
+    color: var(--ink);
+    box-shadow: 0 4px 20px rgba(196,135,58,0.25);
+  }
+
+  /* ==================== ORNAMENTAL DETAILS ==================== */
+  /* Top-left decorative corner mark */
+  #canvas::before {
+    content: 'SPECIMEN ARCHIVE';
+    position: fixed;
+    bottom: 18px; right: 18px;
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.25em;
+    color: rgba(184,150,78,0.12);
+    z-index: 50;
+    text-transform: uppercase;
+  }
+
+  /* Subtle vignette */
+  #canvas::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(10,9,8,0.6) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ==================== RESPONSIVE ==================== */
+  @media (max-width: 640px) {
+    .start-title { font-size: 2.4rem; }
+    .tweet-card { padding: 1.2rem 1.4rem; }
+    .tweet-title { font-size: 1.25rem; }
+    .finale-grid { grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+    .fin-item { padding: 0.4rem; }
+    .fin-item .e { font-size: 1.3rem; }
+  }
 </style>
 </head>
 <body>
 
 <!-- START -->
 <div id="start-screen">
-  <div class="start-lobster">🦞</div>
+  <div class="start-lobster">&#x1F99E;</div>
   <div class="start-title">Evolution of Claws</div>
   <div class="start-sub">a 530-million-year knowledge drop</div>
-  <div class="start-tag">🧵 riding the #OpenClaw wave</div>
-  <button class="start-play" onclick="startShow()">▶ Play with AI Voice</button>
-  <div class="start-note">AI narration · Tone.js ambient · SVG illustrations</div>
+  <div class="start-tag">riding the #OpenClaw wave</div>
+  <button class="start-play" onclick="startShow()">&#9654; Play with AI Voice</button>
+  <div class="start-note">AI narration &middot; ambient music &middot; illustrated</div>
 </div>
 
 <!-- CONTROLS -->
-<button class="ctrl" id="btn-pause" onclick="togglePause()">⏸</button>
-<button class="ctrl" id="btn-music" onclick="toggleMusic()">🎵</button>
-<button class="ctrl" id="btn-voice" onclick="toggleVoice()">🗣</button>
+<button class="ctrl" id="btn-pause" onclick="togglePause()">&#x23F8;</button>
+<button class="ctrl" id="btn-music" onclick="toggleMusic()">&#x1F3B5;</button>
+<button class="ctrl" id="btn-voice" onclick="toggleVoice()">&#x1F5E3;</button>
 <div id="progress" style="width:0%"></div>
 <div id="counter"></div>
 <div id="subs"></div>
@@ -110,51 +529,51 @@
   <div class="scene-bg bg-g1"></div>
   <div class="tweet-card">
     <div class="tweet-head">
-      <div class="tweet-avatar">🦞</div>
-      <div><div class="tweet-name">ClawDrop 🧬</div><div class="tweet-handle">@claw_evolution</div></div>
-      <div class="tweet-thread-badge">🧵 Thread</div>
+      <div class="tweet-avatar">&#x1F99E;</div>
+      <div><div class="tweet-name">ClawDrop &#x1F9EC;</div><div class="tweet-handle">@claw_evolution</div></div>
+      <div class="tweet-thread-badge">Thread</div>
     </div>
     <div class="tweet-illust">
       <svg viewBox="0 0 580 200">
         <defs>
-          <linearGradient id="glow1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff6b35" stop-opacity="0.3"/><stop offset="100%" stop-color="#f7c948" stop-opacity="0.1"/></linearGradient>
+          <linearGradient id="glow1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#c4873a" stop-opacity="0.2"/><stop offset="100%" stop-color="#b8964e" stop-opacity="0.05"/></linearGradient>
         </defs>
-        <rect fill="url(#glow1)" width="580" height="200" rx="12"/>
+        <rect fill="url(#glow1)" width="580" height="200" rx="3"/>
         <!-- Timeline line -->
-        <line x1="50" y1="120" x2="530" y2="120" stroke="#333" stroke-width="2"/>
+        <line x1="50" y1="120" x2="530" y2="120" stroke="rgba(184,150,78,0.15)" stroke-width="1"/>
         <!-- Era dots -->
-        <circle cx="80" cy="120" r="8" fill="#3b82f6"><animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite"/></circle>
-        <text x="80" y="150" fill="#71767b" font-size="9" text-anchor="middle">530 Mya</text>
-        <text x="80" y="100" font-size="18" text-anchor="middle">🦐</text>
+        <circle cx="80" cy="120" r="8" fill="#2c4a6e" opacity="0.7"><animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite"/></circle>
+        <text x="80" y="150" fill="rgba(240,236,228,0.3)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">530 Mya</text>
+        <text x="80" y="100" font-size="18" text-anchor="middle">&#x1F990;</text>
 
-        <circle cx="160" cy="120" r="8" fill="#8b5cf6"><animate attributeName="r" values="6;10;6" dur="2s" begin="0.3s" repeatCount="indefinite"/></circle>
-        <text x="160" y="150" fill="#71767b" font-size="9" text-anchor="middle">430 Mya</text>
-        <text x="160" y="100" font-size="18" text-anchor="middle">🦂</text>
+        <circle cx="160" cy="120" r="8" fill="#5c3d7a" opacity="0.7"><animate attributeName="r" values="6;10;6" dur="2s" begin="0.3s" repeatCount="indefinite"/></circle>
+        <text x="160" y="150" fill="rgba(240,236,228,0.3)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">430 Mya</text>
+        <text x="160" y="100" font-size="18" text-anchor="middle">&#x1F982;</text>
 
-        <circle cx="240" cy="120" r="8" fill="#10b981"><animate attributeName="r" values="6;10;6" dur="2s" begin="0.6s" repeatCount="indefinite"/></circle>
-        <text x="240" y="150" fill="#71767b" font-size="9" text-anchor="middle">300 Mya</text>
-        <text x="240" y="100" font-size="18" text-anchor="middle">🦎</text>
+        <circle cx="240" cy="120" r="8" fill="#2d6a4f" opacity="0.7"><animate attributeName="r" values="6;10;6" dur="2s" begin="0.6s" repeatCount="indefinite"/></circle>
+        <text x="240" y="150" fill="rgba(240,236,228,0.3)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">300 Mya</text>
+        <text x="240" y="100" font-size="18" text-anchor="middle">&#x1F98E;</text>
 
-        <circle cx="340" cy="120" r="8" fill="#ef4444"><animate attributeName="r" values="6;10;6" dur="2s" begin="0.9s" repeatCount="indefinite"/></circle>
-        <text x="340" y="150" fill="#71767b" font-size="9" text-anchor="middle">150 Mya</text>
-        <text x="340" y="100" font-size="18" text-anchor="middle">🦖</text>
+        <circle cx="340" cy="120" r="8" fill="#8b1a1a" opacity="0.7"><animate attributeName="r" values="6;10;6" dur="2s" begin="0.9s" repeatCount="indefinite"/></circle>
+        <text x="340" y="150" fill="rgba(240,236,228,0.3)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">150 Mya</text>
+        <text x="340" y="100" font-size="18" text-anchor="middle">&#x1F996;</text>
 
-        <circle cx="420" cy="120" r="8" fill="#3b82f6"><animate attributeName="r" values="6;10;6" dur="2s" begin="1.2s" repeatCount="indefinite"/></circle>
-        <text x="420" y="150" fill="#71767b" font-size="9" text-anchor="middle">60 Mya</text>
-        <text x="420" y="100" font-size="18" text-anchor="middle">🦅</text>
+        <circle cx="420" cy="120" r="8" fill="#2c4a6e" opacity="0.7"><animate attributeName="r" values="6;10;6" dur="2s" begin="1.2s" repeatCount="indefinite"/></circle>
+        <text x="420" y="150" fill="rgba(240,236,228,0.3)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">60 Mya</text>
+        <text x="420" y="100" font-size="18" text-anchor="middle">&#x1F985;</text>
 
-        <circle cx="500" cy="120" r="8" fill="#22c55e"><animate attributeName="r" values="6;10;6" dur="2s" begin="1.5s" repeatCount="indefinite"/></circle>
-        <text x="500" y="150" fill="#71767b" font-size="9" text-anchor="middle">Today</text>
-        <text x="500" y="100" font-size="18" text-anchor="middle">🐱</text>
+        <circle cx="500" cy="120" r="8" fill="#2d5a3d" opacity="0.7"><animate attributeName="r" values="6;10;6" dur="2s" begin="1.5s" repeatCount="indefinite"/></circle>
+        <text x="500" y="150" fill="rgba(240,236,228,0.3)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">Today</text>
+        <text x="500" y="100" font-size="18" text-anchor="middle">&#x1F431;</text>
 
-        <text x="290" y="40" fill="#f7c948" font-size="16" font-weight="bold" text-anchor="middle" font-family="Space Grotesk,sans-serif">530 Million Years of Claw Evolution</text>
-        <text x="290" y="60" fill="#71767b" font-size="11" text-anchor="middle">from ocean grabbers → to retractable murder mittens</text>
+        <text x="290" y="40" fill="#b8964e" font-size="16" font-weight="bold" text-anchor="middle" font-family="Cormorant Garamond,serif" font-style="italic">530 Million Years of Claw Evolution</text>
+        <text x="290" y="60" fill="rgba(240,236,228,0.3)" font-size="11" text-anchor="middle" font-family="Source Serif 4,serif" font-style="italic">from ocean grabbers to retractable murder mittens</text>
       </svg>
     </div>
-    <div class="tweet-title">Why claws are nature's most OP invention — a 530M-year thread 🦞🧵</div>
-    <div class="tweet-body">Everyone's talking about <span class="hl">#OpenClaw</span> but nobody's asking: where did claws actually come from?<br><br>Buckle up. This thread goes <span class="stat">530 million years</span> deep. From ancient ocean killers to your cat's retractable murder mittens.<br><br>Evolution built different. Let's go ⬇️</div>
+    <div class="tweet-title">Why claws are nature's most OP invention &mdash; a 530M-year thread</div>
+    <div class="tweet-body">Everyone's talking about <span class="hl">#OpenClaw</span> but nobody's asking: where did claws actually come from?<br><br>Buckle up. This thread goes <span class="stat">530 million years</span> deep. From ancient ocean killers to your cat's retractable murder mittens.<br><br>Evolution built different. Let's go.</div>
     <div class="tweet-tags">#OpenClaw #Evolution #ScienceTwitter #NatureIsLit</div>
-    <div class="tweet-engage"><span>💬 2.4K</span><span>🔁 12K</span><span>❤️ 48K</span><span>📊 1.2M</span></div>
+    <div class="tweet-engage"><span>&#x1F4AC; 2.4K</span><span>&#x1F501; 12K</span><span>&#x2764;&#xFE0F; 48K</span><span>&#x1F4CA; 1.2M</span></div>
   </div>
 </div>
 
@@ -163,15 +582,15 @@
   <div class="scene-bg bg-g2"></div>
   <div class="tweet-card">
     <div class="tweet-head">
-      <div class="tweet-avatar">🦞</div>
-      <div><div class="tweet-name">ClawDrop 🧬</div><div class="tweet-handle">@claw_evolution</div></div>
-      <div class="tweet-thread-badge">1/6</div>
+      <div class="tweet-avatar">&#x1F99E;</div>
+      <div><div class="tweet-name">ClawDrop &#x1F9EC;</div><div class="tweet-handle">@claw_evolution</div></div>
+      <div class="tweet-thread-badge">1 / 6</div>
     </div>
-    <div class="tweet-era">🌊 530 MILLION YEARS AGO · CAMBRIAN</div>
+    <div class="tweet-era">&#x1F30A; 530 million years ago &middot; Cambrian</div>
     <div class="tweet-illust">
       <svg viewBox="0 0 580 200">
         <defs><linearGradient id="ocean" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#0c3547"/><stop offset="100%" stop-color="#1a4a5e"/></linearGradient></defs>
-        <rect fill="url(#ocean)" width="580" height="200" rx="12"/>
+        <rect fill="url(#ocean)" width="580" height="200" rx="3"/>
         <!-- Water lines -->
         <line x1="0" y1="40" x2="580" y2="40" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
         <line x1="0" y1="80" x2="580" y2="80" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
@@ -185,7 +604,6 @@
         <g class="float-anim">
           <ellipse cx="290" cy="105" rx="80" ry="36" fill="#e67e22" opacity="0.9"/>
           <ellipse cx="290" cy="102" rx="72" ry="30" fill="#f39c12"/>
-          <!-- Segments -->
           <ellipse cx="290" cy="105" rx="58" ry="24" fill="#e67e22" opacity="0.4"/>
           <!-- Eyes -->
           <circle cx="250" cy="82" r="10" fill="#2c3e50"/><circle cx="250" cy="80" r="6" fill="#ecf0f1"/><circle cx="251" cy="79" r="3" fill="#2c3e50"/>
@@ -206,15 +624,14 @@
           <path d="M210 100 Q195 115 208 125" stroke="#f39c12" fill="none" stroke-width="2.5" opacity="0.5"/>
           <path d="M370 100 Q385 115 372 125" stroke="#f39c12" fill="none" stroke-width="2.5" opacity="0.5"/>
         </g>
-        <!-- Label -->
-        <text x="290" y="192" fill="rgba(255,255,255,0.35)" font-size="10" text-anchor="middle" font-style="italic">Anomalocaris canadensis · ~1 metre long</text>
+        <text x="290" y="192" fill="rgba(255,255,255,0.25)" font-size="10" text-anchor="middle" font-style="italic" font-family="Source Serif 4,serif">Anomalocaris canadensis &middot; ~1 metre long</text>
       </svg>
     </div>
-    <div class="tweet-title">Meet the OG apex predator 🔱</div>
-    <div class="tweet-body"><span class="hl">Anomalocaris</span> was a 1-metre sea beast with spiny front appendages that could <span class="stat">crush trilobites like chips</span>.<br><br>These were literally Earth's first claw weapons. 530 million years before #OpenClaw, nature shipped v0.1 🦞</div>
+    <div class="tweet-title">Meet the OG apex predator</div>
+    <div class="tweet-body"><span class="hl">Anomalocaris</span> was a 1-metre sea beast with spiny front appendages that could <span class="stat">crush trilobites like chips</span>.<br><br>These were literally Earth's first claw weapons. 530 million years before #OpenClaw, nature shipped v0.1</div>
     <div class="tweet-tags">#Cambrian #Anomalocaris #FirstClaw</div>
-    <div class="tweet-engage"><span>💬 891</span><span>🔁 4.2K</span><span>❤️ 21K</span><span>📊 580K</span></div>
-    <div class="tweet-source">📚 Daley & Edgecombe (2014) <i>J. Paleontology</i> · <a href="https://en.wikipedia.org/wiki/Anomalocaris">en.wikipedia.org/wiki/Anomalocaris</a></div>
+    <div class="tweet-engage"><span>&#x1F4AC; 891</span><span>&#x1F501; 4.2K</span><span>&#x2764;&#xFE0F; 21K</span><span>&#x1F4CA; 580K</span></div>
+    <div class="tweet-source">Daley &amp; Edgecombe (2014) <i>J. Paleontology</i> &middot; <a href="https://en.wikipedia.org/wiki/Anomalocaris">en.wikipedia.org/wiki/Anomalocaris</a></div>
   </div>
 </div>
 
@@ -223,20 +640,18 @@
   <div class="scene-bg bg-g3"></div>
   <div class="tweet-card">
     <div class="tweet-head">
-      <div class="tweet-avatar">🦞</div>
-      <div><div class="tweet-name">ClawDrop 🧬</div><div class="tweet-handle">@claw_evolution</div></div>
-      <div class="tweet-thread-badge">2/6</div>
+      <div class="tweet-avatar">&#x1F99E;</div>
+      <div><div class="tweet-name">ClawDrop &#x1F9EC;</div><div class="tweet-handle">@claw_evolution</div></div>
+      <div class="tweet-thread-badge">2 / 6</div>
     </div>
-    <div class="tweet-era">🦂 430 MILLION YEARS AGO · SILURIAN</div>
+    <div class="tweet-era">&#x1F982; 430 million years ago &middot; Silurian</div>
     <div class="tweet-illust">
       <svg viewBox="0 0 580 200">
         <defs><linearGradient id="shore" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#2d1b4e"/><stop offset="100%" stop-color="#4a2c6e"/></linearGradient></defs>
-        <rect fill="url(#shore)" width="580" height="200" rx="12"/>
+        <rect fill="url(#shore)" width="580" height="200" rx="3"/>
         <g class="float-anim">
-          <!-- Scorpion body -->
           <ellipse cx="290" cy="115" rx="32" ry="22" fill="#8e44ad"/>
           <ellipse cx="290" cy="112" rx="28" ry="18" fill="#9b59b6"/>
-          <!-- Head -->
           <ellipse cx="290" cy="95" rx="20" ry="14" fill="#8e44ad"/>
           <circle cx="282" cy="91" r="4" fill="#ecf0f1"/><circle cx="282" cy="90" r="2" fill="#2c3e50"/>
           <circle cx="298" cy="91" r="4" fill="#ecf0f1"/><circle cx="298" cy="90" r="2" fill="#2c3e50"/>
@@ -265,18 +680,17 @@
           <line x1="312" y1="115" x2="332" y2="138" stroke="#8e44ad" stroke-width="2.5"/>
           <line x1="308" y1="120" x2="328" y2="142" stroke="#8e44ad" stroke-width="2.5"/>
         </g>
-        <!-- Force label -->
-        <text x="160" y="40" fill="#ff6b35" font-size="11" font-weight="bold">740 lbs</text>
-        <text x="160" y="52" fill="#71767b" font-size="9">pinch force (coconut crab)</text>
-        <text x="400" y="40" fill="#ff6b35" font-size="11" font-weight="bold">2+ metres</text>
-        <text x="400" y="52" fill="#71767b" font-size="9">ancient sea scorpion length</text>
+        <text x="160" y="40" fill="#c4873a" font-size="11" font-weight="bold" font-family="JetBrains Mono,monospace">740 lbs</text>
+        <text x="160" y="52" fill="rgba(240,236,228,0.3)" font-size="9" font-family="Source Serif 4,serif" font-style="italic">pinch force (coconut crab)</text>
+        <text x="400" y="40" fill="#c4873a" font-size="11" font-weight="bold" font-family="JetBrains Mono,monospace">2+ metres</text>
+        <text x="400" y="52" fill="rgba(240,236,228,0.3)" font-size="9" font-family="Source Serif 4,serif" font-style="italic">ancient sea scorpion length</text>
       </svg>
     </div>
-    <div class="tweet-title">Pincers entered the chat 🦀🦂</div>
-    <div class="tweet-body">Nature said "what if the claw could <span class="hl">crush AND grip</span>?"<br><br>Scorpions, crabs, lobsters — all evolved chelae (pincers). A coconut crab squeezes with <span class="stat">740 lbs of force</span>. Ancient sea scorpions grew over <span class="stat">2 metres long</span>.<br><br>The claw meta was already cracked. 🦞</div>
+    <div class="tweet-title">Pincers entered the chat</div>
+    <div class="tweet-body">Nature said &ldquo;what if the claw could <span class="hl">crush AND grip</span>?&rdquo;<br><br>Scorpions, crabs, lobsters &mdash; all evolved chelae (pincers). A coconut crab squeezes with <span class="stat">740 lbs of force</span>. Ancient sea scorpions grew over <span class="stat">2 metres long</span>.<br><br>The claw meta was already cracked.</div>
     <div class="tweet-tags">#Pincers #CoconutCrab #SeaScorpion #Eurypterid</div>
-    <div class="tweet-engage"><span>💬 1.1K</span><span>🔁 5.8K</span><span>❤️ 29K</span><span>📊 740K</span></div>
-    <div class="tweet-source">📚 Oka et al. (2016) <i>PLOS ONE</i> · <a href="https://en.wikipedia.org/wiki/Coconut_crab">Coconut crab</a> · <a href="https://en.wikipedia.org/wiki/Eurypterid">Eurypterida</a></div>
+    <div class="tweet-engage"><span>&#x1F4AC; 1.1K</span><span>&#x1F501; 5.8K</span><span>&#x2764;&#xFE0F; 29K</span><span>&#x1F4CA; 740K</span></div>
+    <div class="tweet-source">Oka et al. (2016) <i>PLOS ONE</i> &middot; <a href="https://en.wikipedia.org/wiki/Coconut_crab">Coconut crab</a> &middot; <a href="https://en.wikipedia.org/wiki/Eurypterid">Eurypterida</a></div>
   </div>
 </div>
 
@@ -285,57 +699,49 @@
   <div class="scene-bg bg-g4"></div>
   <div class="tweet-card">
     <div class="tweet-head">
-      <div class="tweet-avatar">🦞</div>
-      <div><div class="tweet-name">ClawDrop 🧬</div><div class="tweet-handle">@claw_evolution</div></div>
-      <div class="tweet-thread-badge">3/6</div>
+      <div class="tweet-avatar">&#x1F99E;</div>
+      <div><div class="tweet-name">ClawDrop &#x1F9EC;</div><div class="tweet-handle">@claw_evolution</div></div>
+      <div class="tweet-thread-badge">3 / 6</div>
     </div>
-    <div class="tweet-era">🦎 300 MILLION YEARS AGO · CARBONIFEROUS</div>
+    <div class="tweet-era">&#x1F98E; 300 million years ago &middot; Carboniferous</div>
     <div class="tweet-illust">
       <svg viewBox="0 0 580 200">
         <defs><linearGradient id="land" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#2d4a1e"/><stop offset="100%" stop-color="#3d6b28"/></linearGradient></defs>
-        <rect fill="url(#land)" width="580" height="200" rx="12"/>
-        <!-- Tree trunk -->
+        <rect fill="url(#land)" width="580" height="200" rx="3"/>
         <rect x="420" y="0" width="40" height="200" fill="#5D4037" opacity="0.4"/>
         <rect x="424" y="0" width="32" height="200" fill="#6D4C41" opacity="0.3"/>
-        <!-- Bark texture -->
         <line x1="432" y1="20" x2="448" y2="20" stroke="#4E342E" stroke-width="1" opacity="0.4"/>
         <line x1="430" y1="60" x2="452" y2="60" stroke="#4E342E" stroke-width="1" opacity="0.4"/>
         <line x1="428" y1="100" x2="454" y2="100" stroke="#4E342E" stroke-width="1" opacity="0.4"/>
         <line x1="432" y1="140" x2="450" y2="140" stroke="#4E342E" stroke-width="1" opacity="0.4"/>
-        <!-- Lizard climbing tree -->
         <g class="float-anim">
           <ellipse cx="380" cy="100" rx="50" ry="22" fill="#27ae60" transform="rotate(-20,380,100)"/>
           <ellipse cx="380" cy="97" rx="45" ry="18" fill="#2ecc71" transform="rotate(-20,380,100)"/>
-          <!-- Head -->
           <ellipse cx="418" cy="78" rx="18" ry="13" fill="#2ecc71"/>
           <circle cx="426" cy="74" r="4" fill="#f1c40f"/><circle cx="427" cy="74" r="2" fill="#2c3e50"/>
           <path d="M430 82 Q436 86 438 82" stroke="#27ae60" fill="none" stroke-width="1.5"/>
-          <!-- Front leg + CLAWS gripping tree -->
           <path d="M408 88 L425 95 L435 100" stroke="#27ae60" fill="none" stroke-width="4" stroke-linecap="round"/>
           <path d="M435 100 L445 104" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/>
           <path d="M435 100 L442 108" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/>
           <path d="M435 100 L438 110" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/>
           <circle cx="445" cy="104" r="2" fill="#e74c3c"/><circle cx="442" cy="108" r="2" fill="#e74c3c"/><circle cx="438" cy="110" r="2" fill="#e74c3c"/>
-          <!-- Back leg + claws -->
           <path d="M352 108 L340 125 L335 135" stroke="#27ae60" fill="none" stroke-width="4" stroke-linecap="round"/>
           <path d="M335 135 L328 140" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/>
           <path d="M335 135 L330 143" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/>
           <circle cx="328" cy="140" r="2" fill="#e74c3c"/><circle cx="330" cy="143" r="2" fill="#e74c3c"/>
-          <!-- Tail -->
           <path d="M340 110 Q310 115 285 108 Q270 104 265 108" stroke="#2ecc71" fill="none" stroke-width="8" stroke-linecap="round"/>
         </g>
-        <!-- Labels -->
-        <text x="120" y="50" fill="#10b981" font-size="12" font-weight="bold">WATER → LAND</text>
-        <text x="120" y="66" fill="#71767b" font-size="9">fins → toes → claws</text>
-        <text x="120" y="140" fill="#ff6b35" font-size="11" font-weight="bold">Keratin claws</text>
-        <text x="120" y="154" fill="#71767b" font-size="9">for grip · dig · catch</text>
+        <text x="120" y="50" fill="#2d6a4f" font-size="12" font-weight="bold" font-family="Cormorant Garamond,serif" font-style="italic">Water to Land</text>
+        <text x="120" y="66" fill="rgba(240,236,228,0.3)" font-size="9" font-family="Source Serif 4,serif" font-style="italic">fins &rarr; toes &rarr; claws</text>
+        <text x="120" y="140" fill="#c4873a" font-size="11" font-weight="bold" font-family="JetBrains Mono,monospace">Keratin claws</text>
+        <text x="120" y="154" fill="rgba(240,236,228,0.3)" font-size="9" font-family="Source Serif 4,serif" font-style="italic">for grip &middot; dig &middot; catch</text>
       </svg>
     </div>
-    <div class="tweet-title">Claws left the ocean. Game changed forever. 🌍</div>
-    <div class="tweet-body">Life moved to land and claws had to <span class="hl">completely reinvent themselves</span>.<br><br>Fins → toes → claws. Early reptiles evolved curved keratin hooks for climbing bark, digging burrows, and snatching insects.<br><br>The <span class="stat">biggest platform migration in history</span> — water to land. And claws were the killer feature. 🦞</div>
+    <div class="tweet-title">Claws left the ocean. Game changed forever.</div>
+    <div class="tweet-body">Life moved to land and claws had to <span class="hl">completely reinvent themselves</span>.<br><br>Fins became toes, toes got claws. Early reptiles evolved curved keratin hooks for climbing bark, digging burrows, and snatching insects.<br><br>The <span class="stat">biggest platform migration in history</span> &mdash; water to land. And claws were the killer feature.</div>
     <div class="tweet-tags">#LandEvolution #Tetrapod #FirstSteps</div>
-    <div class="tweet-engage"><span>💬 780</span><span>🔁 3.9K</span><span>❤️ 18K</span><span>📊 490K</span></div>
-    <div class="tweet-source">📚 Clack, J.A. (2012) <i>Gaining Ground</i>, Indiana UP · <a href="https://en.wikipedia.org/wiki/Claw">Wikipedia: Claw</a></div>
+    <div class="tweet-engage"><span>&#x1F4AC; 780</span><span>&#x1F501; 3.9K</span><span>&#x2764;&#xFE0F; 18K</span><span>&#x1F4CA; 490K</span></div>
+    <div class="tweet-source">Clack, J.A. (2012) <i>Gaining Ground</i>, Indiana UP &middot; <a href="https://en.wikipedia.org/wiki/Claw">Wikipedia: Claw</a></div>
   </div>
 </div>
 
@@ -344,63 +750,53 @@
   <div class="scene-bg bg-g1"></div>
   <div class="tweet-card">
     <div class="tweet-head">
-      <div class="tweet-avatar">🦞</div>
-      <div><div class="tweet-name">ClawDrop 🧬</div><div class="tweet-handle">@claw_evolution</div></div>
-      <div class="tweet-thread-badge">4/6</div>
+      <div class="tweet-avatar">&#x1F99E;</div>
+      <div><div class="tweet-name">ClawDrop &#x1F9EC;</div><div class="tweet-handle">@claw_evolution</div></div>
+      <div class="tweet-thread-badge">4 / 6</div>
     </div>
-    <div class="tweet-era">🦖 150 MILLION YEARS AGO · JURASSIC / CRETACEOUS</div>
+    <div class="tweet-era">&#x1F996; 150 million years ago &middot; Jurassic / Cretaceous</div>
     <div class="tweet-illust">
       <svg viewBox="0 0 580 200">
         <defs><linearGradient id="jura" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#4a1a0a"/><stop offset="100%" stop-color="#6b2d15"/></linearGradient></defs>
-        <rect fill="url(#jura)" width="580" height="200" rx="12"/>
+        <rect fill="url(#jura)" width="580" height="200" rx="3"/>
         <g class="float-anim">
-          <!-- Velociraptor -->
-          <!-- Body -->
           <ellipse cx="280" cy="100" rx="48" ry="26" fill="#e67e22"/>
           <ellipse cx="280" cy="97" rx="42" ry="22" fill="#f39c12"/>
-          <!-- Neck + head -->
           <path d="M315 92 Q330 75 340 62" stroke="#f39c12" fill="#f39c12" stroke-width="14"/>
           <ellipse cx="350" cy="52" rx="24" ry="15" fill="#f39c12"/>
           <path d="M365 56 L382 54 L378 62 L365 59" fill="#e67e22"/>
           <path d="M368 56 L370 60 L372 56 L374 60 L376 56" stroke="#ecf0f1" fill="none" stroke-width="0.8"/>
           <circle cx="358" cy="48" r="4" fill="#ecf0f1"/><circle cx="359" cy="48" r="2.5" fill="#c0392b"/>
-          <!-- Arms with claws -->
           <path d="M308 96 L322 105 L332 110" stroke="#f39c12" fill="none" stroke-width="4" stroke-linecap="round"/>
           <path d="M332 110 L345 106 Q350 104 347 110" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="1.5"/>
           <path d="M332 110 L342 114 Q346 116 343 118" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="1.5"/>
-          <!-- Legs -->
           <path d="M262 118 L252 145 L248 158" stroke="#e67e22" fill="none" stroke-width="5" stroke-linecap="round"/>
           <path d="M288 118 L282 145 L280 158" stroke="#e67e22" fill="none" stroke-width="5" stroke-linecap="round"/>
-          <!-- THE FAMOUS SICKLE CLAW!! -->
+          <!-- THE FAMOUS SICKLE CLAW -->
           <path d="M248 158 L228 144 Q222 140 226 149 L242 162" fill="#ecf0f1" stroke="#e74c3c" stroke-width="2"/>
           <path d="M280 158 L260 144 Q254 140 258 149 L274 162" fill="#ecf0f1" stroke="#e74c3c" stroke-width="2"/>
-          <!-- Sickle claw highlight pulse -->
           <circle cx="230" cy="148" r="14" fill="#e74c3c" opacity="0.15"><animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/></circle>
           <circle cx="262" cy="148" r="14" fill="#e74c3c" opacity="0.15"><animate attributeName="r" values="12;18;12" dur="1.5s" begin="0.3s" repeatCount="indefinite"/></circle>
-          <!-- Other toe claws -->
           <path d="M248 158 L252 170" stroke="#ecf0f1" stroke-width="2" stroke-linecap="round"/>
           <path d="M280 158 L284 170" stroke="#ecf0f1" stroke-width="2" stroke-linecap="round"/>
-          <!-- Tail -->
           <path d="M232 100 Q200 96 175 105 Q160 112 155 108" stroke="#f39c12" fill="none" stroke-width="9" stroke-linecap="round"/>
-          <!-- Feathers -->
           <path d="M222 96 L214 86" stroke="#e67e22" stroke-width="1.5" opacity="0.5"/>
           <path d="M210 98 L202 88" stroke="#e67e22" stroke-width="1.5" opacity="0.5"/>
         </g>
-        <!-- Stats -->
-        <text x="440" y="50" fill="#ff6b35" font-size="20" font-weight="bold">6.5 cm</text>
-        <text x="440" y="66" fill="#71767b" font-size="9">sickle claw length</text>
-        <text x="440" y="110" fill="#ff6b35" font-size="20" font-weight="bold">~1 metre</text>
-        <text x="440" y="126" fill="#71767b" font-size="9">Therizinosaurus claw</text>
-        <text x="440" y="140" fill="#555" font-size="8">(longest hand claw EVER)</text>
-        <text x="440" y="175" fill="#f7c948" font-size="9" font-weight="bold">↑ SICKLE CLAW</text>
-        <text x="440" y="187" fill="#71767b" font-size="8">kept raised = always sharp</text>
+        <text x="440" y="50" fill="#c4873a" font-size="20" font-weight="bold" font-family="JetBrains Mono,monospace">6.5 cm</text>
+        <text x="440" y="66" fill="rgba(240,236,228,0.3)" font-size="9" font-family="Source Serif 4,serif" font-style="italic">sickle claw length</text>
+        <text x="440" y="110" fill="#c4873a" font-size="20" font-weight="bold" font-family="JetBrains Mono,monospace">~1 metre</text>
+        <text x="440" y="126" fill="rgba(240,236,228,0.3)" font-size="9" font-family="Source Serif 4,serif" font-style="italic">Therizinosaurus claw</text>
+        <text x="440" y="140" fill="rgba(240,236,228,0.2)" font-size="8" font-family="Source Serif 4,serif" font-style="italic">(longest hand claw EVER)</text>
+        <text x="440" y="175" fill="#b8964e" font-size="9" font-weight="bold" font-family="JetBrains Mono,monospace">SICKLE CLAW</text>
+        <text x="440" y="187" fill="rgba(240,236,228,0.3)" font-size="8" font-family="Source Serif 4,serif" font-style="italic">kept raised = always sharp</text>
       </svg>
     </div>
-    <div class="tweet-title">Dinosaurs went absolutely insane with claws 🗡️</div>
-    <div class="tweet-body">Velociraptor kept its <span class="stat">6.5 cm sickle claw</span> raised while walking — literally keeping its blade sheathed until attack mode.<br><br>But <span class="hl">Therizinosaurus</span>? Its claws were nearly <span class="stat">1 METRE LONG</span>. The largest hand claws of any animal that has EVER existed.<br><br>Nature was not playing. 🦞</div>
+    <div class="tweet-title">Dinosaurs went absolutely insane with claws</div>
+    <div class="tweet-body">Velociraptor kept its <span class="stat">6.5 cm sickle claw</span> raised while walking &mdash; literally keeping its blade sheathed until attack mode.<br><br>But <span class="hl">Therizinosaurus</span>? Its claws were nearly <span class="stat">1 METRE LONG</span>. The largest hand claws of any animal that has EVER existed.<br><br>Nature was not playing.</div>
     <div class="tweet-tags">#Velociraptor #Therizinosaurus #DinosaurClaws</div>
-    <div class="tweet-engage"><span>💬 2.1K</span><span>🔁 9.4K</span><span>❤️ 52K</span><span>📊 1.4M</span></div>
-    <div class="tweet-source">📚 Turner et al. (2012) <i>Bull. AMNH</i> · <a href="https://en.wikipedia.org/wiki/Velociraptor">Velociraptor</a> · <a href="https://en.wikipedia.org/wiki/Therizinosaurus">Therizinosaurus</a></div>
+    <div class="tweet-engage"><span>&#x1F4AC; 2.1K</span><span>&#x1F501; 9.4K</span><span>&#x2764;&#xFE0F; 52K</span><span>&#x1F4CA; 1.4M</span></div>
+    <div class="tweet-source">Turner et al. (2012) <i>Bull. AMNH</i> &middot; <a href="https://en.wikipedia.org/wiki/Velociraptor">Velociraptor</a> &middot; <a href="https://en.wikipedia.org/wiki/Therizinosaurus">Therizinosaurus</a></div>
   </div>
 </div>
 
@@ -409,35 +805,30 @@
   <div class="scene-bg bg-g5"></div>
   <div class="tweet-card">
     <div class="tweet-head">
-      <div class="tweet-avatar">🦞</div>
-      <div><div class="tweet-name">ClawDrop 🧬</div><div class="tweet-handle">@claw_evolution</div></div>
-      <div class="tweet-thread-badge">5/6</div>
+      <div class="tweet-avatar">&#x1F99E;</div>
+      <div><div class="tweet-name">ClawDrop &#x1F9EC;</div><div class="tweet-handle">@claw_evolution</div></div>
+      <div class="tweet-thread-badge">5 / 6</div>
     </div>
-    <div class="tweet-era">🦅 60 MILLION YEARS AGO · POST-DINOSAUR ERA</div>
+    <div class="tweet-era">&#x1F985; 60 million years ago &middot; Post-Dinosaur Era</div>
     <div class="tweet-illust">
       <svg viewBox="0 0 580 200">
         <defs><linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1a3a5c"/><stop offset="100%" stop-color="#2d5a8a"/></linearGradient></defs>
-        <rect fill="url(#sky)" width="580" height="200" rx="12"/>
-        <!-- Clouds -->
+        <rect fill="url(#sky)" width="580" height="200" rx="3"/>
         <ellipse cx="80" cy="30" rx="40" ry="12" fill="rgba(255,255,255,0.05)"/>
         <ellipse cx="480" cy="50" rx="50" ry="14" fill="rgba(255,255,255,0.04)"/>
         <g class="float-anim">
-          <!-- Eagle body -->
           <ellipse cx="290" cy="82" rx="42" ry="30" fill="#5D4037"/>
           <ellipse cx="290" cy="79" rx="38" ry="26" fill="#6D4C41"/>
-          <!-- White head -->
           <circle cx="318" cy="58" r="18" fill="#ecf0f1"/>
           <path d="M330 58 L352 64 L335 70" fill="#f39c12"/>
           <circle cx="326" cy="54" r="4" fill="#f1c40f"/><circle cx="327" cy="54" r="2.5" fill="#2c3e50"/>
           <path d="M322 51 L331 49" stroke="#bdc3c7" stroke-width="2" stroke-linecap="round"/>
-          <!-- Wings spread -->
           <path d="M252 82 Q200 55 160 62 Q148 66 162 72 Q178 76 200 78" fill="#5D4037"/>
           <path d="M252 82 Q205 60 168 66 Q158 70 170 74 Q184 77 205 79" fill="#6D4C41"/>
           <path d="M160 62 L145 56 L158 68" fill="#4E342E"/>
           <path d="M328 82 Q380 55 420 62 Q432 66 418 72 Q402 76 380 78" fill="#5D4037"/>
           <path d="M328 82 Q375 60 412 66 Q422 70 410 74 Q396 77 375 79" fill="#6D4C41"/>
           <path d="M420 62 L435 56 L422 68" fill="#4E342E"/>
-          <!-- Legs -->
           <path d="M275 108 L268 135 L265 150" stroke="#f39c12" fill="none" stroke-width="3.5" stroke-linecap="round"/>
           <path d="M305 108 L312 135 L315 150" stroke="#f39c12" fill="none" stroke-width="3.5" stroke-linecap="round"/>
           <!-- POWERFUL TALONS -->
@@ -449,22 +840,20 @@
           <path d="M315 150 L308 168 Q306 174 310 166 L314 156" fill="#2c3e50" stroke="#1a1a2e" stroke-width="1.5"/>
           <path d="M315 150 L320 168 Q322 174 320 166 L317 156" fill="#2c3e50" stroke="#1a1a2e" stroke-width="1.5"/>
           <path d="M315 150 L328 162 Q332 166 328 162 L320 154" fill="#2c3e50" stroke="#1a1a2e" stroke-width="1.5"/>
-          <!-- Tail -->
           <path d="M252 96 L228 115 L238 105" fill="#4E342E"/>
           <path d="M252 99 L224 120 L236 108" fill="#5D4037"/>
         </g>
-        <!-- Stats -->
-        <text x="60" y="140" fill="#ff6b35" font-size="16" font-weight="bold">500+ PSI</text>
-        <text x="60" y="155" fill="#71767b" font-size="9">grip force (harpy eagle)</text>
-        <text x="60" y="180" fill="#f7c948" font-size="11" font-weight="bold">360° grip</text>
-        <text x="60" y="192" fill="#71767b" font-size="8">owls' reversible toe</text>
+        <text x="60" y="140" fill="#c4873a" font-size="16" font-weight="bold" font-family="JetBrains Mono,monospace">500+ PSI</text>
+        <text x="60" y="155" fill="rgba(240,236,228,0.3)" font-size="9" font-family="Source Serif 4,serif" font-style="italic">grip force (harpy eagle)</text>
+        <text x="60" y="180" fill="#b8964e" font-size="11" font-weight="bold" font-family="JetBrains Mono,monospace">360&deg; grip</text>
+        <text x="60" y="192" fill="rgba(240,236,228,0.3)" font-size="8" font-family="Source Serif 4,serif" font-style="italic">owls&apos; reversible toe</text>
       </svg>
     </div>
-    <div class="tweet-title">Birds inherited dinosaur tech — then maxed it out 🦅</div>
-    <div class="tweet-body">Harpy eagle talons = <span class="stat">grizzly bear claw size</span>. They crush with <span class="stat">500+ PSI</span> — enough to snap bones.<br><br>Owls have a <span class="hl">reversible fourth toe</span> for a 360° death grip. Peregrine falcons hit prey at 240 mph then grab them mid-air.<br><br>Dinosaurs never died. They just got wings. 🦞</div>
+    <div class="tweet-title">Birds inherited dinosaur tech &mdash; then maxed it out</div>
+    <div class="tweet-body">Harpy eagle talons = <span class="stat">grizzly bear claw size</span>. They crush with <span class="stat">500+ PSI</span> &mdash; enough to snap bones.<br><br>Owls have a <span class="hl">reversible fourth toe</span> for a 360&deg; death grip. Peregrine falcons hit prey at 240 mph then grab them mid-air.<br><br>Dinosaurs never died. They just got wings.</div>
     <div class="tweet-tags">#BirdsAreDinosaurs #HarpyEagle #Talons</div>
-    <div class="tweet-engage"><span>💬 1.8K</span><span>🔁 7.6K</span><span>❤️ 41K</span><span>📊 980K</span></div>
-    <div class="tweet-source">📚 Ferguson-Lees & Christie (2001) <i>Raptors of the World</i> · <a href="https://en.wikipedia.org/wiki/Harpy_eagle">Harpy eagle</a></div>
+    <div class="tweet-engage"><span>&#x1F4AC; 1.8K</span><span>&#x1F501; 7.6K</span><span>&#x2764;&#xFE0F; 41K</span><span>&#x1F4CA; 980K</span></div>
+    <div class="tweet-source">Ferguson-Lees &amp; Christie (2001) <i>Raptors of the World</i> &middot; <a href="https://en.wikipedia.org/wiki/Harpy_eagle">Harpy eagle</a></div>
   </div>
 </div>
 
@@ -473,43 +862,35 @@
   <div class="scene-bg bg-g6"></div>
   <div class="tweet-card">
     <div class="tweet-head">
-      <div class="tweet-avatar">🦞</div>
-      <div><div class="tweet-name">ClawDrop 🧬</div><div class="tweet-handle">@claw_evolution</div></div>
-      <div class="tweet-thread-badge">6/6</div>
+      <div class="tweet-avatar">&#x1F99E;</div>
+      <div><div class="tweet-name">ClawDrop &#x1F9EC;</div><div class="tweet-handle">@claw_evolution</div></div>
+      <div class="tweet-thread-badge">6 / 6</div>
     </div>
-    <div class="tweet-era">🐱 50 MILLION YEARS AGO · AGE OF MAMMALS</div>
+    <div class="tweet-era">&#x1F431; 50 million years ago &middot; Age of Mammals</div>
     <div class="tweet-illust">
       <svg viewBox="0 0 580 200">
         <defs><linearGradient id="forest" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1a2e1a"/><stop offset="100%" stop-color="#2d4a2d"/></linearGradient></defs>
-        <rect fill="url(#forest)" width="580" height="200" rx="12"/>
+        <rect fill="url(#forest)" width="580" height="200" rx="3"/>
         <g class="float-anim">
-          <!-- Cat body -->
           <ellipse cx="290" cy="108" rx="50" ry="30" fill="#e67e22"/>
           <ellipse cx="290" cy="105" rx="45" ry="26" fill="#f39c12"/>
-          <!-- Stripes -->
           <path d="M268 96 Q273 89 278 96" stroke="#e67e22" fill="none" stroke-width="2"/>
           <path d="M285 93 Q290 86 295 93" stroke="#e67e22" fill="none" stroke-width="2"/>
           <path d="M302 96 Q307 89 312 96" stroke="#e67e22" fill="none" stroke-width="2"/>
-          <!-- Head -->
           <circle cx="340" cy="78" r="24" fill="#f39c12"/>
-          <!-- Ears -->
           <path d="M324 58 L318 35 L338 52" fill="#f39c12"/><path d="M326 58 L322 42 L336 53" fill="#ffb6c1"/>
           <path d="M356 58 L362 35 L342 52" fill="#f39c12"/><path d="M354 58 L358 42 L344 53" fill="#ffb6c1"/>
-          <!-- Eyes -->
           <ellipse cx="330" cy="74" rx="5" ry="6" fill="#2ecc71"/><ellipse cx="330" cy="74" rx="2" ry="5.5" fill="#2c3e50"/>
           <ellipse cx="350" cy="74" rx="5" ry="6" fill="#2ecc71"/><ellipse cx="350" cy="74" rx="2" ry="5.5" fill="#2c3e50"/>
-          <!-- Nose + mouth -->
           <path d="M338 84 L340 87 L342 84" fill="#e74c3c"/>
           <path d="M335 89 Q340 94 345 89" stroke="#e67e22" fill="none" stroke-width="1.5"/>
-          <!-- Whiskers -->
           <line x1="322" y1="85" x2="295" y2="80" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
           <line x1="322" y1="88" x2="293" y2="88" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
           <line x1="358" y1="85" x2="385" y2="80" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
           <line x1="358" y1="88" x2="387" y2="88" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
-          <!-- Front legs -->
           <rect x="310" y="125" width="10" height="35" rx="5" fill="#f39c12"/>
           <rect x="325" y="125" width="10" height="35" rx="5" fill="#e67e22"/>
-          <!-- RETRACTABLE CLAWS (extended!) -->
+          <!-- RETRACTABLE CLAWS -->
           <path d="M312 160 L308 175 Q306 180 310 173 L314 163" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="1">
             <animate attributeName="d" values="M312 160 L308 175 Q306 180 310 173 L314 163;M312 160 L312 168 Q312 170 312 168 L312 163;M312 160 L308 175 Q306 180 310 173 L314 163" dur="2s" repeatCount="indefinite"/>
           </path>
@@ -528,26 +909,22 @@
           <path d="M335 160 L339 175 Q341 180 337 173 L333 163" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="1">
             <animate attributeName="d" values="M335 160 L339 175 Q341 180 337 173 L333 163;M335 160 L335 168 Q335 170 335 168 L335 163;M335 160 L339 175 Q341 180 337 173 L333 163" dur="2s" repeatCount="indefinite"/>
           </path>
-          <!-- Back legs -->
           <rect x="250" y="125" width="10" height="35" rx="5" fill="#f39c12"/>
           <rect x="265" y="125" width="10" height="35" rx="5" fill="#e67e22"/>
-          <!-- Tail -->
           <path d="M240 105 Q215 92 200 75 Q195 62 205 68" stroke="#f39c12" fill="none" stroke-width="9" stroke-linecap="round"/>
         </g>
-        <!-- Retractable label -->
-        <text x="380" y="155" fill="#f7c948" font-size="10" font-weight="bold">← RETRACTABLE!</text>
-        <text x="380" y="167" fill="#71767b" font-size="8">extends on attack · hides to stay sharp</text>
-        <!-- Animated arrow -->
-        <path d="M372 150 Q365 150 365 160 Q365 170 372 170" stroke="#f7c948" fill="none" stroke-width="1.5" stroke-dasharray="4,3">
+        <text x="380" y="155" fill="#b8964e" font-size="10" font-weight="bold" font-family="JetBrains Mono,monospace">RETRACTABLE</text>
+        <text x="380" y="167" fill="rgba(240,236,228,0.3)" font-size="8" font-family="Source Serif 4,serif" font-style="italic">extends on attack &middot; hides to stay sharp</text>
+        <path d="M372 150 Q365 150 365 160 Q365 170 372 170" stroke="#b8964e" fill="none" stroke-width="1.5" stroke-dasharray="4,3">
           <animate attributeName="stroke-dashoffset" values="0;-14" dur="1s" repeatCount="indefinite"/>
         </path>
       </svg>
     </div>
-    <div class="tweet-title">Cats invented stealth mode 🐱⚔️</div>
-    <div class="tweet-body">Cats are the <span class="hl">only animals with fully retractable claws</span>. Hidden until strike time. Always razor-sharp.<br><br>Sloths evolved <span class="stat">10 cm hooks</span> for hanging upside down 24/7. Bears use thick claws for digging and fishing.<br><br>Mammals didn't just copy the claw — they <span class="hl">shipped new features</span>. Retractable deploy is peak engineering. 🦞</div>
+    <div class="tweet-title">Cats invented stealth mode</div>
+    <div class="tweet-body">Cats are the <span class="hl">only animals with fully retractable claws</span>. Hidden until strike time. Always razor-sharp.<br><br>Sloths evolved <span class="stat">10 cm hooks</span> for hanging upside down 24/7. Bears use thick claws for digging and fishing.<br><br>Mammals didn't just copy the claw &mdash; they <span class="hl">shipped new features</span>. Retractable deploy is peak engineering.</div>
     <div class="tweet-tags">#CatsOfTwitter #RetractableClaws #MurderMittens</div>
-    <div class="tweet-engage"><span>💬 3.2K</span><span>🔁 11K</span><span>❤️ 67K</span><span>📊 1.8M</span></div>
-    <div class="tweet-source">📚 Kitchener et al. (2010) <i>Biology & Conservation of Wild Felids</i> · <a href="https://en.wikipedia.org/wiki/Cat_anatomy">Cat anatomy</a></div>
+    <div class="tweet-engage"><span>&#x1F4AC; 3.2K</span><span>&#x1F501; 11K</span><span>&#x2764;&#xFE0F; 67K</span><span>&#x1F4CA; 1.8M</span></div>
+    <div class="tweet-source">Kitchener et al. (2010) <i>Biology &amp; Conservation of Wild Felids</i> &middot; <a href="https://en.wikipedia.org/wiki/Cat_anatomy">Cat anatomy</a></div>
   </div>
 </div>
 
@@ -556,27 +933,27 @@
   <div class="scene-bg bg-g7"></div>
   <div class="tweet-card">
     <div class="tweet-head">
-      <div class="tweet-avatar">🦞</div>
-      <div><div class="tweet-name">ClawDrop 🧬</div><div class="tweet-handle">@claw_evolution</div></div>
-      <div class="tweet-thread-badge">🔥 Finale</div>
+      <div class="tweet-avatar">&#x1F99E;</div>
+      <div><div class="tweet-name">ClawDrop &#x1F9EC;</div><div class="tweet-handle">@claw_evolution</div></div>
+      <div class="tweet-thread-badge">Finale</div>
     </div>
-    <div class="tweet-title">530M years. One conclusion. 🦞</div>
+    <div class="tweet-title">530M years. One conclusion.</div>
     <div class="tweet-body">Claws = nature's <span class="hl">Swiss Army knife</span>. Reinvented thousands of times. Always perfectly adapted.</div>
     <div class="finale-grid">
-      <div class="fin-item"><div class="e">🦅</div><div class="n">Hunting</div></div>
-      <div class="fin-item"><div class="e">🐻</div><div class="n">Digging</div></div>
-      <div class="fin-item"><div class="e">🦥</div><div class="n">Climbing</div></div>
-      <div class="fin-item"><div class="e">🦀</div><div class="n">Defence</div></div>
-      <div class="fin-item"><div class="e">🐱</div><div class="n">Stealth</div></div>
-      <div class="fin-item"><div class="e">🐸</div><div class="n">Gripping</div></div>
-      <div class="fin-item"><div class="e">🦎</div><div class="n">Display</div></div>
-      <div class="fin-item"><div class="e">🐝</div><div class="n">Building</div></div>
+      <div class="fin-item"><div class="e">&#x1F985;</div><div class="n">Hunting</div></div>
+      <div class="fin-item"><div class="e">&#x1F43B;</div><div class="n">Digging</div></div>
+      <div class="fin-item"><div class="e">&#x1F9A5;</div><div class="n">Climbing</div></div>
+      <div class="fin-item"><div class="e">&#x1F980;</div><div class="n">Defence</div></div>
+      <div class="fin-item"><div class="e">&#x1F431;</div><div class="n">Stealth</div></div>
+      <div class="fin-item"><div class="e">&#x1F438;</div><div class="n">Gripping</div></div>
+      <div class="fin-item"><div class="e">&#x1F98E;</div><div class="n">Display</div></div>
+      <div class="fin-item"><div class="e">&#x1F41D;</div><div class="n">Building</div></div>
     </div>
-    <div class="tweet-body"><span class="hl">#OpenClaw</span> didn't come from nowhere. Nature's been open-sourcing claw designs for half a billion years.<br><br>Like + RT if evolution goes hard. 🦞🧵</div>
+    <div class="tweet-body"><span class="hl">#OpenClaw</span> didn't come from nowhere. Nature's been open-sourcing claw designs for half a billion years.<br><br>Like + RT if evolution goes hard.</div>
     <div class="tweet-tags">#OpenClaw #Evolution #NatureIsLit #ScienceTwitter</div>
-    <div class="tweet-engage"><span>💬 4.8K</span><span>🔁 22K</span><span>❤️ 89K</span><span>📊 3.1M</span></div>
-    <div class="tweet-source">📚 All sources cited per scene · <a href="https://en.wikipedia.org/wiki/Claw">Wikipedia: Claw</a></div>
-    <div style="text-align:center;"><button class="replay-btn" onclick="replay()">🔄 Watch Again</button></div>
+    <div class="tweet-engage"><span>&#x1F4AC; 4.8K</span><span>&#x1F501; 22K</span><span>&#x2764;&#xFE0F; 89K</span><span>&#x1F4CA; 3.1M</span></div>
+    <div class="tweet-source">All sources cited per scene &middot; <a href="https://en.wikipedia.org/wiki/Claw">Wikipedia: Claw</a></div>
+    <div style="text-align:center;"><button class="replay-btn" onclick="replay()">Watch Again</button></div>
   </div>
 </div>
 
@@ -613,7 +990,7 @@ async function speak(t){if(!voiceOn)return;stopVoice();if(!(await speakPuter(t))
 function stopVoice(){if(currentAudio){try{currentAudio.pause();currentAudio.currentTime=0;}catch(e){}currentAudio=null;}if('speechSynthesis' in window)speechSynthesis.cancel();hideSubs();}
 function showSubs(t){const s=document.getElementById('subs');s.textContent=t;s.classList.add('show');}
 function hideSubs(){document.getElementById('subs').classList.remove('show');}
-function toggleVoice(){voiceOn=!voiceOn;document.getElementById('btn-voice').textContent=voiceOn?'🗣':'🤫';if(!voiceOn)stopVoice();else speak(N[cur]);}
+function toggleVoice(){voiceOn=!voiceOn;document.getElementById('btn-voice').textContent=voiceOn?'\u{1F5E3}':'\u{1F92B}';if(!voiceOn)stopVoice();else speak(N[cur]);}
 
 // MUSIC
 let synth,bass,fx,bgLoop;
@@ -627,7 +1004,7 @@ function initMusic(){
   Tone.Transport.bpm.value=50;bgLoop.start(0);Tone.Transport.start();
 }
 function pingFx(){if(!muteMusic&&audioStarted)["E5","G5","B5"].forEach((n,i)=>setTimeout(()=>fx.triggerAttackRelease(n,"16n"),i*80));}
-function toggleMusic(){muteMusic=!muteMusic;document.getElementById('btn-music').textContent=muteMusic?'🔇':'🎵';Tone.Destination.mute=muteMusic;}
+function toggleMusic(){muteMusic=!muteMusic;document.getElementById('btn-music').textContent=muteMusic?'\u{1F507}':'\u{1F3B5}';Tone.Destination.mute=muteMusic;}
 
 // SCENES
 function showScene(i){
@@ -641,15 +1018,15 @@ function showScene(i){
 function next(){if(cur<TOTAL-1){showScene(cur+1);schedule();}}
 function schedule(){clearTimeout(timer);if(!paused)timer=setTimeout(next,SCENE_MS);}
 function togglePause(){
-  paused=!paused;document.getElementById('btn-pause').textContent=paused?'▶':'⏸';
+  paused=!paused;document.getElementById('btn-pause').textContent=paused?'\u25B6':'\u23F8';
   if(paused){clearTimeout(timer);if(currentAudio)try{currentAudio.pause();}catch(e){}if('speechSynthesis' in window)speechSynthesis.pause();}
   else{schedule();if(currentAudio)try{currentAudio.play();}catch(e){}if('speechSynthesis' in window)speechSynthesis.resume();}
 }
-function replay(){stopVoice();cur=0;paused=false;document.getElementById('btn-pause').textContent='⏸';showScene(0);schedule();}
+function replay(){stopVoice();cur=0;paused=false;document.getElementById('btn-pause').textContent='\u23F8';showScene(0);schedule();}
 
 function startShow(){
   initMusic();if('speechSynthesis' in window)speechSynthesis.getVoices();
-  const ss=document.getElementById('start-screen');ss.style.opacity='0';setTimeout(()=>ss.style.display='none',600);
+  const ss=document.getElementById('start-screen');ss.style.opacity='0';setTimeout(()=>ss.style.display='none',800);
   document.querySelectorAll('.ctrl').forEach(b=>b.style.display='flex');
   document.getElementById('counter').style.display='block';
   showScene(0);schedule();
