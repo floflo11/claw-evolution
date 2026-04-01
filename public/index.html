@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Evolution of Claws — OpenClaw Knowledge Drop</title>
-<script src="https://js.puter.com/v2/"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@400;700&display=swap');
@@ -961,7 +960,7 @@
 
 <script>
 const TOTAL=8, SCENE_MS=14000;
-let cur=0,paused=false,muteMusic=false,voiceOn=true,timer=null,audioStarted=false,currentAudio=null;
+let cur=0,paused=false,muteMusic=false,voiceOn=true,timer=null,audioStarted=false;
 
 // NARRATIONS
 const N=[
@@ -975,19 +974,16 @@ const N=[
   "530 million years. One conclusion. Claws are nature's Swiss Army knife — reinvented thousands of times, always perfectly adapted. OpenClaw didn't come from nowhere. Nature's been open-sourcing claw designs for half a billion years. Like and retweet if evolution goes hard."
 ];
 
-// VOICE (Puter.js AI with browser fallback)
-async function speakPuter(t){
-  try{const a=await puter.ai.txt2speech(t,{voice:'Matthew',engine:'neural',language:'en-US'});currentAudio=a;a.play();showSubs(t);a.onended=()=>hideSubs();return true;}catch(e){return false;}
-}
-function speakBrowser(t){
-  if(!('speechSynthesis' in window))return;speechSynthesis.cancel();
+// VOICE (browser Speech Synthesis)
+function speak(t){
+  if(!voiceOn)return;stopVoice();
+  if(!('speechSynthesis' in window))return;
   const u=new SpeechSynthesisUtterance(t);u.rate=0.95;u.pitch=1;
   const v=speechSynthesis.getVoices();
   const p=v.find(x=>/Google/.test(x.name)&&x.lang.startsWith('en'))||v.find(x=>/Samantha|Daniel/.test(x.name))||v.find(x=>x.lang.startsWith('en'));
   if(p)u.voice=p;showSubs(t);u.onend=()=>hideSubs();speechSynthesis.speak(u);
 }
-async function speak(t){if(!voiceOn)return;stopVoice();if(!(await speakPuter(t)))speakBrowser(t);}
-function stopVoice(){if(currentAudio){try{currentAudio.pause();currentAudio.currentTime=0;}catch(e){}currentAudio=null;}if('speechSynthesis' in window)speechSynthesis.cancel();hideSubs();}
+function stopVoice(){if('speechSynthesis' in window)speechSynthesis.cancel();hideSubs();}
 function showSubs(t){const s=document.getElementById('subs');s.textContent=t;s.classList.add('show');}
 function hideSubs(){document.getElementById('subs').classList.remove('show');}
 function toggleVoice(){voiceOn=!voiceOn;document.getElementById('btn-voice').textContent=voiceOn?'\u{1F5E3}':'\u{1F92B}';if(!voiceOn)stopVoice();else speak(N[cur]);}
@@ -1019,8 +1015,8 @@ function next(){if(cur<TOTAL-1){showScene(cur+1);schedule();}}
 function schedule(){clearTimeout(timer);if(!paused)timer=setTimeout(next,SCENE_MS);}
 function togglePause(){
   paused=!paused;document.getElementById('btn-pause').textContent=paused?'\u25B6':'\u23F8';
-  if(paused){clearTimeout(timer);if(currentAudio)try{currentAudio.pause();}catch(e){}if('speechSynthesis' in window)speechSynthesis.pause();}
-  else{schedule();if(currentAudio)try{currentAudio.play();}catch(e){}if('speechSynthesis' in window)speechSynthesis.resume();}
+  if(paused){clearTimeout(timer);if('speechSynthesis' in window)speechSynthesis.pause();}
+  else{schedule();if('speechSynthesis' in window)speechSynthesis.resume();}
 }
 function replay(){stopVoice();cur=0;paused=false;document.getElementById('btn-pause').textContent='\u23F8';showScene(0);schedule();}
 
