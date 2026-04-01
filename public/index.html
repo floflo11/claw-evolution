@@ -1083,9 +1083,9 @@ function showScene(i) {
   prefetchNext(i);
   cur = i;
 
-  // Fallback timer in case voice doesn't fire onended (or voice is off)
+  // Only use fallback timer when voice is off — otherwise wait for voice to finish
   clearTimeout(timer);
-  if (!paused) timer = setTimeout(next, SCENE_MS);
+  if (!voiceOn && !paused) timer = setTimeout(next, SCENE_MS);
 }
 
 function next() { if (cur < TOTAL - 1) { showScene(cur + 1); } }
