@@ -959,11 +959,12 @@
 </div>
 
 <script>
-const TOTAL=8, SCENE_MS=14000;
-let cur=0,paused=false,muteMusic=false,voiceOn=true,timer=null,audioStarted=false;
+const TOTAL = 8, SCENE_MS = 14000;
+let cur = 0, paused = false, muteMusic = false, voiceOn = true, timer = null, audioStarted = false;
+let currentAudio = null;
 
 // NARRATIONS
-const N=[
+const N = [
   "Why claws are nature's most overpowered invention — a 530-million-year thread. Everyone's talking about OpenClaw, but nobody's asking where claws actually came from. Buckle up. This goes deep.",
   "530 million years ago, the Cambrian ocean. Meet Anomalocaris — a one-metre sea beast with spiny front appendages that crushed trilobites like chips. These were Earth's first claw weapons. Nature shipped version zero-point-one.",
   "Fast forward 100 million years. Nature said: what if the claw could crush AND grip? Scorpions, crabs, lobsters — all evolved pincers. A coconut crab squeezes with 740 pounds of force. Ancient sea scorpions grew over 2 metres long. The claw meta was cracked.",
@@ -974,69 +975,283 @@ const N=[
   "530 million years. One conclusion. Claws are nature's Swiss Army knife — reinvented thousands of times, always perfectly adapted. OpenClaw didn't come from nowhere. Nature's been open-sourcing claw designs for half a billion years. Like and retweet if evolution goes hard."
 ];
 
-// VOICE (browser Speech Synthesis)
-function speak(t){
-  if(!voiceOn)return;stopVoice();
-  if(!('speechSynthesis' in window))return;
-  const u=new SpeechSynthesisUtterance(t);u.rate=0.95;u.pitch=1;
-  const v=speechSynthesis.getVoices();
-  const p=v.find(x=>/Google/.test(x.name)&&x.lang.startsWith('en'))||v.find(x=>/Samantha|Daniel/.test(x.name))||v.find(x=>x.lang.startsWith('en'));
-  if(p)u.voice=p;showSubs(t);u.onend=()=>hideSubs();speechSynthesis.speak(u);
-}
-function stopVoice(){if('speechSynthesis' in window)speechSynthesis.cancel();hideSubs();}
-function showSubs(t){const s=document.getElementById('subs');s.textContent=t;s.classList.add('show');}
-function hideSubs(){document.getElementById('subs').classList.remove('show');}
-function toggleVoice(){voiceOn=!voiceOn;document.getElementById('btn-voice').textContent=voiceOn?'\u{1F5E3}':'\u{1F92B}';if(!voiceOn)stopVoice();else speak(N[cur]);}
+// Audio cache so we only call the API once per narration
+const audioCache = {};
 
-// MUSIC
-let synth,bass,fx,bgLoop;
-function initMusic(){
-  if(audioStarted)return;audioStarted=true;Tone.start();
-  synth=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:0.8,decay:0.5,sustain:0.5,release:2},volume:-22}).toDestination();
-  bass=new Tone.Synth({oscillator:{type:'sine'},envelope:{attack:0.5,decay:0.3,sustain:0.7,release:1.5},volume:-26}).toDestination();
-  fx=new Tone.Synth({oscillator:{type:'sine'},envelope:{attack:0.01,decay:0.2,sustain:0,release:0.4},volume:-16}).toDestination();
-  const ch=[["C4","E4","G4"],["A3","C4","E4"],["F3","A3","C4"],["G3","B3","D4"]],bn=["C2","A1","F1","G1"];let i=0;
-  bgLoop=new Tone.Loop(t=>{if(!muteMusic){synth.triggerAttackRelease(ch[i%4],"2n",t);bass.triggerAttackRelease(bn[i%4],"2n",t);}i++;},"2m");
-  Tone.Transport.bpm.value=50;bgLoop.start(0);Tone.Transport.start();
-}
-function pingFx(){if(!muteMusic&&audioStarted)["E5","G5","B5"].forEach((n,i)=>setTimeout(()=>fx.triggerAttackRelease(n,"16n"),i*80));}
-function toggleMusic(){muteMusic=!muteMusic;document.getElementById('btn-music').textContent=muteMusic?'\u{1F507}':'\u{1F3B5}';Tone.Destination.mute=muteMusic;}
+// ==================== VOICE (OpenAI TTS via serverless, browser fallback) ====================
 
-// SCENES
-function showScene(i){
-  document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));
-  const t=document.querySelector(`[data-s="${i}"]`);
-  if(t){const c=t.querySelector('.tweet-card');if(c){c.style.animation='none';void c.offsetHeight;c.style.animation='';}t.classList.add('active');}
-  document.getElementById('progress').style.width=((i)/(TOTAL-1)*100)+'%';
-  document.getElementById('counter').textContent=`${i+1} / ${TOTAL}`;
-  if(i>0)pingFx();speak(N[i]);cur=i;
-}
-function next(){if(cur<TOTAL-1){showScene(cur+1);schedule();}}
-function schedule(){clearTimeout(timer);if(!paused)timer=setTimeout(next,SCENE_MS);}
-function togglePause(){
-  paused=!paused;document.getElementById('btn-pause').textContent=paused?'\u25B6':'\u23F8';
-  if(paused){clearTimeout(timer);if('speechSynthesis' in window)speechSynthesis.pause();}
-  else{schedule();if('speechSynthesis' in window)speechSynthesis.resume();}
-}
-function replay(){stopVoice();cur=0;paused=false;document.getElementById('btn-pause').textContent='\u23F8';showScene(0);schedule();}
-
-function startShow(){
-  initMusic();if('speechSynthesis' in window)speechSynthesis.getVoices();
-  const ss=document.getElementById('start-screen');ss.style.opacity='0';setTimeout(()=>ss.style.display='none',800);
-  document.querySelectorAll('.ctrl').forEach(b=>b.style.display='flex');
-  document.getElementById('counter').style.display='block';
-  showScene(0);schedule();
+async function fetchTTS(text) {
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice: 'onyx' })
+    });
+    if (!res.ok) throw new Error('TTS API error');
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    return null;
+  }
 }
 
-document.addEventListener('keydown',e=>{
-  if(e.code==='Space'){e.preventDefault();togglePause();}
-  else if(e.code==='ArrowRight'){stopVoice();clearTimeout(timer);if(cur<TOTAL-1){showScene(cur+1);if(!paused)schedule();}}
-  else if(e.code==='ArrowLeft'){stopVoice();clearTimeout(timer);if(cur>0){showScene(cur-1);if(!paused)schedule();}}
-  else if(e.code==='KeyM')toggleMusic();
-  else if(e.code==='KeyV')toggleVoice();
+async function speak(text) {
+  if (!voiceOn) return;
+  stopVoice();
+  showSubs(text);
+
+  // Try OpenAI TTS first
+  let url = audioCache[text];
+  if (url === undefined) {
+    url = await fetchTTS(text);
+    audioCache[text] = url; // cache even if null (failed)
+  }
+
+  if (url) {
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.onended = () => { currentAudio = null; hideSubs(); };
+    audio.onerror = () => { currentAudio = null; speakBrowser(text); };
+    audio.play().catch(() => speakBrowser(text));
+  } else {
+    speakBrowser(text);
+  }
+}
+
+function speakBrowser(text) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.95; u.pitch = 1;
+  const v = speechSynthesis.getVoices();
+  const p = v.find(x => /Google/.test(x.name) && x.lang.startsWith('en'))
+         || v.find(x => /Samantha|Daniel/.test(x.name))
+         || v.find(x => x.lang.startsWith('en'));
+  if (p) u.voice = p;
+  showSubs(text);
+  u.onend = () => hideSubs();
+  speechSynthesis.speak(u);
+}
+
+function stopVoice() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  hideSubs();
+}
+
+function showSubs(t) {
+  const s = document.getElementById('subs');
+  s.textContent = t;
+  s.classList.add('show');
+}
+function hideSubs() {
+  document.getElementById('subs').classList.remove('show');
+}
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  document.getElementById('btn-voice').textContent = voiceOn ? '\u{1F5E3}' : '\u{1F92B}';
+  if (!voiceOn) stopVoice();
+  else speak(N[cur]);
+}
+
+// Pre-fetch next narration audio in background
+function prefetchNext(i) {
+  const next = i + 1;
+  if (next < TOTAL && !audioCache[N[next]]) {
+    fetchTTS(N[next]).then(url => { audioCache[N[next]] = url; });
+  }
+}
+
+// ==================== MUSIC (atmospheric ambient) ====================
+
+let pad, pad2, sub, shimmer, noiseNode, noiseFilt, transitionFx;
+let padLoop, subLoop, shimmerLoop;
+
+// Each scene has its own tonal color
+const SCENE_CHORDS = [
+  { pad: ["C3","E3","G3","B3"],  sub: "C1",  shimmer: ["E5","G5","B5"] },       // Intro — open, wondering
+  { pad: ["D3","F3","A3","C4"],  sub: "D1",  shimmer: ["F5","A5","C6"] },       // Cambrian — deep ocean
+  { pad: ["Bb2","D3","F3","A3"], sub: "Bb1", shimmer: ["D5","F5","A5"] },       // Silurian — ancient
+  { pad: ["G2","B2","D3","F#3"], sub: "G1",  shimmer: ["B4","D5","F#5"] },      // Carboniferous — earthy
+  { pad: ["E2","G#2","B2","D#3"],sub: "E1",  shimmer: ["G#4","B4","D#5"] },     // Jurassic — dramatic
+  { pad: ["A2","C#3","E3","G#3"],sub: "A1",  shimmer: ["C#5","E5","G#5"] },     // Birds — soaring
+  { pad: ["F2","A2","C3","E3"],  sub: "F1",  shimmer: ["A4","C5","E5"] },       // Mammals — warm
+  { pad: ["C3","E3","G3","B3"],  sub: "C1",  shimmer: ["G5","B5","D6"] },       // Finale — return home
+];
+
+function initMusic() {
+  if (audioStarted) return;
+  audioStarted = true;
+  Tone.start();
+
+  // Reverb and delay for atmosphere
+  const reverb = new Tone.Reverb({ decay: 6, wet: 0.5 }).toDestination();
+  const delay = new Tone.FeedbackDelay({ delayTime: "8n.", feedback: 0.2, wet: 0.15 }).connect(reverb);
+  const filter = new Tone.Filter({ frequency: 2000, type: 'lowpass', rolloff: -24 }).connect(delay);
+
+  // Warm evolving pad
+  pad = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'sine' },
+    envelope: { attack: 3, decay: 1, sustain: 0.7, release: 4 },
+    volume: -24
+  }).connect(filter);
+
+  // Second pad layer for richness
+  pad2 = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'triangle' },
+    envelope: { attack: 4, decay: 2, sustain: 0.5, release: 5 },
+    volume: -28
+  }).connect(filter);
+
+  // Deep sub bass
+  sub = new Tone.Synth({
+    oscillator: { type: 'sine' },
+    envelope: { attack: 2, decay: 1, sustain: 0.8, release: 3 },
+    volume: -26
+  }).connect(reverb);
+
+  // High shimmer bells
+  const shimmerReverb = new Tone.Reverb({ decay: 8, wet: 0.7 }).toDestination();
+  shimmer = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.01, decay: 1.5, sustain: 0, release: 2 },
+    volume: -30
+  }).connect(shimmerReverb);
+
+  // Subtle noise texture (ocean/wind feel)
+  noiseNode = new Tone.Noise({ type: 'brown', volume: -38 });
+  noiseFilt = new Tone.AutoFilter({ frequency: 0.08, depth: 0.6, baseFrequency: 200, octaves: 2 }).connect(reverb);
+  noiseNode.connect(noiseFilt);
+  noiseFilt.start();
+  noiseNode.start();
+
+  // Scene transition chime
+  transitionFx = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.005, decay: 0.8, sustain: 0, release: 1.2 },
+    volume: -20
+  }).connect(shimmerReverb);
+
+  // Main pad loop — plays the current scene's chord
+  let chordIdx = 0;
+  padLoop = new Tone.Loop(time => {
+    if (muteMusic) return;
+    const sc = SCENE_CHORDS[cur] || SCENE_CHORDS[0];
+    pad.triggerAttackRelease(sc.pad, "3m", time);
+    // Offset second pad slightly for width
+    pad2.triggerAttackRelease(sc.pad.map(n => {
+      // Detune by transposing up a 5th for some notes
+      return n;
+    }), "3m", time + 0.3);
+  }, "3m");
+
+  // Sub bass loop
+  subLoop = new Tone.Loop(time => {
+    if (muteMusic) return;
+    const sc = SCENE_CHORDS[cur] || SCENE_CHORDS[0];
+    sub.triggerAttackRelease(sc.sub, "2m", time);
+  }, "2m");
+
+  // Random shimmer arpeggios
+  shimmerLoop = new Tone.Loop(time => {
+    if (muteMusic) return;
+    const sc = SCENE_CHORDS[cur] || SCENE_CHORDS[0];
+    const note = sc.shimmer[Math.floor(Math.random() * sc.shimmer.length)];
+    shimmer.triggerAttackRelease(note, "8n", time);
+  }, "3n");
+
+  Tone.Transport.bpm.value = 40;
+  padLoop.start(0);
+  subLoop.start(0);
+  shimmerLoop.start("1m");
+  Tone.Transport.start();
+}
+
+function pingFx() {
+  if (!muteMusic && audioStarted) {
+    const sc = SCENE_CHORDS[cur] || SCENE_CHORDS[0];
+    sc.shimmer.forEach((n, i) => {
+      setTimeout(() => transitionFx.triggerAttackRelease(n, "16n"), i * 120);
+    });
+  }
+}
+
+function toggleMusic() {
+  muteMusic = !muteMusic;
+  document.getElementById('btn-music').textContent = muteMusic ? '\u{1F507}' : '\u{1F3B5}';
+  if (noiseNode) noiseNode.mute = muteMusic;
+}
+
+// ==================== SCENES ====================
+
+function showScene(i) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  const t = document.querySelector(`[data-s="${i}"]`);
+  if (t) {
+    const c = t.querySelector('.tweet-card');
+    if (c) { c.style.animation = 'none'; void c.offsetHeight; c.style.animation = ''; }
+    t.classList.add('active');
+  }
+  document.getElementById('progress').style.width = ((i) / (TOTAL - 1) * 100) + '%';
+  document.getElementById('counter').textContent = `${i + 1} / ${TOTAL}`;
+  if (i > 0) pingFx();
+  speak(N[i]);
+  prefetchNext(i);
+  cur = i;
+}
+
+function next() { if (cur < TOTAL - 1) { showScene(cur + 1); schedule(); } }
+function schedule() { clearTimeout(timer); if (!paused) timer = setTimeout(next, SCENE_MS); }
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('btn-pause').textContent = paused ? '\u25B6' : '\u23F8';
+  if (paused) {
+    clearTimeout(timer);
+    if (currentAudio) currentAudio.pause();
+    if ('speechSynthesis' in window) speechSynthesis.pause();
+  } else {
+    schedule();
+    if (currentAudio) currentAudio.play();
+    if ('speechSynthesis' in window) speechSynthesis.resume();
+  }
+}
+
+function replay() {
+  stopVoice(); cur = 0; paused = false;
+  document.getElementById('btn-pause').textContent = '\u23F8';
+  showScene(0); schedule();
+}
+
+function startShow() {
+  initMusic();
+  if ('speechSynthesis' in window) speechSynthesis.getVoices();
+  const ss = document.getElementById('start-screen');
+  ss.style.opacity = '0';
+  setTimeout(() => ss.style.display = 'none', 800);
+  document.querySelectorAll('.ctrl').forEach(b => b.style.display = 'flex');
+  document.getElementById('counter').style.display = 'block';
+  showScene(0); schedule();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); togglePause(); }
+  else if (e.code === 'ArrowRight') { stopVoice(); clearTimeout(timer); if (cur < TOTAL - 1) { showScene(cur + 1); if (!paused) schedule(); } }
+  else if (e.code === 'ArrowLeft') { stopVoice(); clearTimeout(timer); if (cur > 0) { showScene(cur - 1); if (!paused) schedule(); } }
+  else if (e.code === 'KeyM') toggleMusic();
+  else if (e.code === 'KeyV') toggleVoice();
 });
 
-window.addEventListener('load',()=>{if('speechSynthesis' in window){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();}});
+window.addEventListener('load', () => {
+  if ('speechSynthesis' in window) {
+    speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  }
+});
 </script>
 </body>
 </html>
